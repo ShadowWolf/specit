@@ -1,0 +1,160 @@
+﻿@page "/projects/{projectId}"
+@using SpecIt.Models
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JsRuntime
+
+<div class="row justify-content-center">    
+    <h3 class="col-">@_project.Name</h3>
+</div>
+<div class="row">
+    <div class="col-sm">
+        <SfCard>
+            @if (_project.Incomes.Any())
+            {
+                <CardHeader>
+                    <h3>Total Income: @TotalIncome?.ToString("c2")</h3>
+                </CardHeader>
+            }
+            else
+            {
+                <CardHeader>
+                    <h3>No Income Yet</h3>
+                </CardHeader>
+            }
+            
+            <CardFooter>
+                <CardFooterContent>
+                    <SfButton Content="Add Income" IconCss="plus" @onclick="@AddIncomeItem"></SfButton>
+                </CardFooterContent>
+            </CardFooter>
+        </SfCard>
+        
+        @if (_project.Incomes.Any())
+        {
+            <Dropzone Items="_project.Incomes" TItem="Income" OnItemDrop="OnDragStop">
+                <IncomeItem Income="@context"
+                            RemovalCallback="@RemoveIncomeItem"
+                            UpdateCallback="@UpdateIncomeItem"></IncomeItem>
+            </Dropzone>
+        }
+
+    </div>
+    <div class="col-sm">
+        &nbsp;
+    </div>
+    <div class="col-sm">
+        <SfCard>
+            @if (_project.Expenses.Any())
+            {
+                <CardHeader>
+                    <h3>Total Expenses: @TotalExpenses?.ToString("c2")</h3>
+                </CardHeader>
+            }
+            else
+            {
+                <CardHeader>
+                    <h3>No Expenses Yet</h3>
+                </CardHeader>
+            }         
+            <CardFooter>
+                <CardFooterContent>
+                    <SfButton Content="Add Expense" @onclick="@AddExpenseItem"></SfButton>
+                </CardFooterContent>
+            </CardFooter>
+        </SfCard>
+        
+        @if (_project.Expenses.Any())
+        {
+            decimal? remainingIncome = TotalIncome ?? 0m; 
+            <Dropzone Items="_project.Expenses" TItem="Expense" OnItemDrop="OnDragStop" InstantReplace="true">
+                <ExpenseItem Expense="@context"
+                             RemovalCallback="@RemoveExpenseItem"
+                             UpdateCallback="@UpdateExpenseItem"
+                             RemainingIncome="@(context.Value.HasValue && remainingIncome.HasValue ? remainingIncome -= context.Value : null)"
+                             ></ExpenseItem>
+            </Dropzone>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string ProjectId { get; set; }
+
+    private decimal? TotalIncome => _project.Incomes.Select(i => i.CalculatedValue).Sum();
+    private decimal? TotalExpenses => _project.Expenses.Select(e => e.Value).Sum();
+
+    private Models.Project _project;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        UpdateProjectUrl();
+    }
+
+    private void UpdateProjectUrl()
+    {
+        ProjectId = _project.SerializeProject();
+        JsRuntime.InvokeAsync<string>("changeUrl", $"projects/{ProjectId}");
+    }
+
+    protected override void OnInitialized()
+    {
+        _project = ProjectId.DeserializeProject();
+    }
+    
+    private void AddIncomeItem()
+    {
+        _project.Incomes.Add(new Income()
+        {
+            Id = _project.Incomes.Count() + 1,
+            Name = default,
+            Value = default,
+            IsTaxable = default
+        });
+    }
+
+    private void AddExpenseItem()
+    {
+        _project.Expenses.Add(new Expense()
+        {
+            Id = _project.Incomes.Count() + 1,
+            Name = default,
+            Value = default
+        });
+    }
+    
+    private void RemoveIncomeItem(Income item)
+    {
+        Console.WriteLine("Removing item from list");
+        _project.Incomes.Remove(item);
+        UpdateProjectUrl();
+        StateHasChanged();
+    }
+
+    private void RemoveExpenseItem(Expense item)
+    {
+        _project.Expenses.Remove(item);
+        UpdateProjectUrl();
+        StateHasChanged();
+    }
+
+    private void UpdateIncomeItem()
+    {
+        Console.WriteLine("Updating item");
+        UpdateProjectUrl();
+        StateHasChanged();
+    }
+
+    private void UpdateExpenseItem()
+    {
+        Console.WriteLine("Updating expense items");
+        UpdateProjectUrl();
+        StateHasChanged();
+    }
+
+    private void OnDragStop()
+    {
+        UpdateProjectUrl();
+        StateHasChanged();
+    }
+}

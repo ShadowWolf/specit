@@ -1,0 +1,31 @@
+﻿@using SpecIt.Models
+<Card Margin="Margin.Is2.FromTop">
+    <CardHeader>
+        <Addons>
+            <Addon AddonType="AddonType.Start">
+                <Heading Size="HeadingSize.Is6">@Income.Name</Heading>
+            </Addon>
+            <Addon AddonType="AddonType.End" Margin="Margin.Is0.FromRight">
+                <Button Color="Color.Danger" Size="Size.ExtraSmall" Clicked="OnRemoveItem">
+                    <Icon Name="IconName.Delete"/>
+                </Button>
+            </Addon>
+        </Addons>
+    </CardHeader>
+    <CardBody>
+        <CardTitle Color="@(Income.CalculatedValue > 0 ? TextColor.Success : TextColor.Danger)">@Income.CalculatedValue</CardTitle>
+    </CardBody>
+</Card>
+
+@code {
+    [Parameter]
+    public Income Income { get; set; }
+    
+    [Parameter]
+    public Action<Income> RemovalCallback { get; set; }
+
+    private void OnRemoveItem()
+    {
+        RemovalCallback?.Invoke(Income);
+    }
+}

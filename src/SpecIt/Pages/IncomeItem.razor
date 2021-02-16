@@ -1,0 +1,60 @@
+﻿@using SpecIt.Models
+@using Syncfusion.Blazor.InPlaceEditor
+
+<SfCard>
+    <CardHeader>
+        <SfInPlaceEditor @bind-Value="@Income.Name" TValue="string" ShowButtons="false" EmptyText="Income Name">
+            <EditorComponent>
+                <SfTextBox @bind-Value="@Income.Name" Placeholder="Income Name"></SfTextBox>
+            </EditorComponent>
+        </SfInPlaceEditor>
+    </CardHeader>
+    <CardContent>
+        <div class="row">
+            <div class="offset-1">
+                <label class="col-form-label" for="@("income-" + Income.Id)">Income:</label>
+            </div>
+            <div class="col-8">
+                <SfInPlaceEditor @bind-Value="@Income.Value" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="decimal?" ShowButtons="false" EmptyText="Income Amount">
+                    <EditorComponent>
+                        <SfNumericTextBox id="@("income-" + Income.Id)" TValue="decimal?" Value="@Income.Value" ValueChanged="@UpdateValues" Decimals="2" Placeholder="Income Amount" Format="c2"></SfNumericTextBox>
+                    </EditorComponent>
+                </SfInPlaceEditor>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <SfCheckBox Label="Taxable" TChecked="bool" @bind-Checked="@Income.IsTaxable" ValueChange="UpdateCallback"></SfCheckBox>
+                <SfCheckBox Label="Enabled" TChecked="bool" @bind-Checked="@Income.IsEnabled" ValueChange="UpdateCallback"></SfCheckBox>
+            </div>
+        </div>
+    </CardContent>
+    <CardFooter Orientation="CardOrientation.Horizontal">
+        <CardFooterContent>
+            <SfButton @onclick="@RemoveItem" CssClass="e-danger">Remove</SfButton>
+        </CardFooterContent>
+    </CardFooter>
+</SfCard>
+
+@code {
+    [Parameter]
+    public Income Income { get; set; }
+    
+    [Parameter]
+    public Action<Income> RemovalCallback { get; set; }
+    
+    [Parameter]
+    public Action UpdateCallback { get; set; }
+
+    private void UpdateValues(decimal? arg)
+    {
+        Income.Value = arg;
+        UpdateCallback?.Invoke();
+    }
+
+    private void RemoveItem()
+    {
+        RemovalCallback?.Invoke(Income);
+    }
+
+}

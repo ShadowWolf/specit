@@ -1,0 +1,68 @@
+﻿@page "/"
+@using SpecIt.Models
+@inject NavigationManager NavigationManager
+
+<Modal @ref="_modalRef">
+    <ModalBackdrop />
+    <ModalContent Centered="true" Size="ModalSize.Large">
+        <ModalHeader>
+            <ModalTitle>Create a new project</ModalTitle>
+        </ModalHeader>
+    
+        <ModalBody>
+            <Field>
+                <FieldLabel>Project Name</FieldLabel>
+                <TextEdit @bind-Text="_newProjectName" Placeholder="My Project" />
+            </Field>
+        </ModalBody>
+        
+        <ModalFooter>
+            <Button Clicked="@CreateNewProject" 
+                    Type="ButtonType.Submit"
+                    PreventDefaultOnSubmit="true">Start Project</Button>
+        </ModalFooter>
+    </ModalContent>
+</Modal>
+
+@if (!creatingProject)
+{
+    <p>Manage your incoming and outgoing costs for a project.</p>
+
+    <Button Type="ButtonType.Link" Clicked="@ShowModal" name="startProject">Start New Project</Button>
+}
+
+@code
+{
+    private string _newProjectName;
+    private Modal _modalRef;
+    private bool creatingProject = false;
+    
+    private void ShowModal()
+    {
+        creatingProject = true;
+        _modalRef.Show();
+    }
+
+    private void HideModal()
+    {
+        creatingProject = false;
+        _modalRef.Hide();
+    }
+    
+    private void CreateNewProject()
+    {
+        HideModal();
+        var project = new Models.Project()
+        {
+            Name = _newProjectName
+        };
+
+        var projectId = project.SerializeProject();
+        NavigateToProject(projectId);
+    }
+    
+    void NavigateToProject(string projectId)
+    {        
+        NavigationManager.NavigateTo($"projects/{projectId}");
+    }
+}

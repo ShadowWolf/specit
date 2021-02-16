@@ -1,0 +1,137 @@
+﻿@page "/projects/{projectId}"
+@using SpecIt.Models
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JsRuntime
+
+<Container Fluid="true">
+    <Row>
+        <Column>
+            <Form>
+                <Fields>
+                    <Validations @ref="_validations" Mode="ValidationMode.Manual">
+                        <Row>
+                            <Validation Validator="@ValidationRule.IsNotEmpty">
+                                <Field>
+                                    <FieldLabel>Name</FieldLabel>
+                                    <TextEdit @bind-Text="@_incomeName" Placeholder="Income source name">
+                                        <Feedback>
+                                            <ValidationNone>Enter the name of the income source</ValidationNone>
+                                        </Feedback>
+                                    </TextEdit>
+                                </Field>
+                            </Validation>
+                        </Row>
+                        <Row>
+                        <Validation Validator="@(v => { if (!string.IsNullOrEmpty(v.Value as string) && decimal.TryParse(v.Value as string, out _)) { v.Status = ValidationStatus.Error; v.ErrorText = "Value does not appear to be a currency";} else { v.Status = ValidationStatus.Success; } })">
+                            <Field>
+                                <FieldLabel>Amount</FieldLabel>
+                                <NumericEdit TValue="decimal?" @bind-Value="@_incomeValue">
+                                    <Feedback>
+                                        <ValidationError/>
+                                    </Feedback>
+                                </NumericEdit>
+                            </Field>
+                        </Validation>
+                        </Row>
+                    </Validations>
+                    <Field Horizontal>
+                        <Check TValue="bool" @bind-Checked="@_incomeTaxable" Inline="true"></Check>
+                        <FieldLabel>Taxable</FieldLabel>
+                    </Field>
+
+                    <Button Type="ButtonType.Submit" Color="Color.Primary" Clicked="OnAddIncome" PreventDefaultOnSubmit="true">
+                        <Icon Name="IconName.Add"/>Add
+                    </Button>
+                </Fields>
+            </Form>
+            @* <Card Margin="Margin.Is4.FromTop"> *@
+            @*     <CardHeader Padding="Padding.Is1.FromBottom"> *@
+            @*         <Heading Size="HeadingSize.Is4">Income</Heading> *@
+            @*     </CardHeader> *@
+            @*     <CardBody Padding="Padding.Is0.FromBottom"> *@
+            @* *@
+            @*                 $1$ @if (_project != null) #1# *@
+            @*                 $1$ { #1# *@
+            @*                 $1$     <Card> #1# *@
+            @*                 $1$         <CardHeader> #1# *@
+            @*                 $1$             <Heading Size="HeadingSize.Is5">Total Income: @(_project.Incomes.Select(i => i.CalculatedValue).Sum())</Heading> #1# *@
+            @*                 $1$         </CardHeader> #1# *@
+            @*                 $1$     </Card> #1# *@
+            @*                 $1$     <CardDeck> #1# *@
+            @*                 $1$     @foreach (var income in _project.Incomes.OrderBy(i => i.Order)) #1# *@
+            @*                 $1$     { #1# *@
+            @*                 $1$         <IncomeItem Income="@income" RemovalCallback="@RemoveItem"/> #1# *@
+            @*                 $1$     } #1# *@
+            @*                 $1$     </CardDeck> #1# *@
+            @*                 $1$ }                     #1# *@
+            @*                 $1$ else #1# *@
+            @*                 $1$ { #1# *@
+            @*                 $1$     <p>Loading Projects...</p> #1# *@
+            @*                 $1$ }                       #1# *@
+            @*     </CardBody> *@
+            @*     $1$ <CardBody Padding="Padding.Is2.OnY"> #1# *@
+            @*     $1$ #1# *@
+            @*     $1$ </CardBody> #1# *@
+            @* </Card> *@
+        </Column>
+        <Column>
+            Expenses....
+        </Column>
+    </Row>
+</Container>
+
+
+
+@code {
+    [Parameter]
+    public string ProjectId { get; set; }
+    private Models.Project _project = Models.Project.Empty;
+    private Validations _validations;
+
+    private string _incomeName;
+    private decimal? _incomeValue;
+    private bool _incomeTaxable;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        ProjectId = _project.SerializeProject();
+
+        JsRuntime.InvokeAsync<string>("changeUrl", $"projects/{ProjectId}");
+
+    }
+
+    private void OnAddIncome()
+    {
+        if (!_validations.ValidateAll() || !_incomeValue.HasValue)
+        {
+            return;
+        }
+        
+        var ordinal = (_project.Incomes.Any() ? _project.Incomes.Max(i => i.Order) : 0) + 1;
+        _project.Incomes.Add(new Income()
+        {
+            Name = _incomeName,
+            Value = _incomeValue.Value,
+            IsTaxable = _incomeTaxable,
+            Order = ordinal
+        });
+        
+        _validations.ClearAll();
+
+        _incomeName = null;
+        _incomeValue = 0;
+        _incomeTaxable = false;
+    }
+
+    private void RemoveItem(Income item)
+    {
+        _project.Incomes.Remove(item);
+        StateHasChanged();
+    }
+
+    protected override void OnParametersSet()
+    {
+        _project = ProjectId.DeserializeProject();
+    }
+
+}

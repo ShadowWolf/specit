@@ -1,0 +1,63 @@
+﻿@using SpecIt.Models
+@using Syncfusion.Blazor.InPlaceEditor
+
+<SfCard>
+    <CardHeader>
+        <SfInPlaceEditor @bind-Value="Expense.Name" TValue="string" ShowButtons="false">
+            <EditorComponent>
+                <SfTextBox @bind-Value="Expense.Name" Placeholder="Expense Name"></SfTextBox>
+            </EditorComponent>
+        </SfInPlaceEditor>
+    </CardHeader>
+    <CardContent>
+        <div class="row">
+            <div class="offset-1">
+                <label class="col-form-label" for="@("expense-" + Expense.Id)">Expense:</label>
+            </div>
+            <div class="col-8">
+                <SfInPlaceEditor @bind-Value="@Expense.Value" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="decimal?" ShowButtons="false" EmptyText="Expense Amount">
+                    <EditorComponent>
+                        <SfNumericTextBox id="@("expense-" + Expense.Id)" TValue="decimal?" Value="@Expense.Value" ValueChanged="@UpdateValues" Decimals="2" Placeholder="Expense Amount" Format="c2"></SfNumericTextBox>
+                    </EditorComponent>
+                </SfInPlaceEditor>
+            </div>
+        </div>            
+        <div class="row">
+            <div class="offset-1">
+                <label class="col-form-label" for="@("remaining-income-" + Expense.Id)">Remaining Income: @RemainingIncome</label>
+            </div>
+        </div>
+    </CardContent>
+    <CardFooter>
+        <CardFooterContent>
+            <CardFooterContent>
+                <SfButton @onclick="@RemoveItem" CssClass="e-danger">Remove</SfButton>
+            </CardFooterContent>
+        </CardFooterContent>
+    </CardFooter>
+</SfCard>
+
+@code {
+    [Parameter]
+    public Expense Expense { get; set; }
+    
+    [Parameter]
+    public Action<Expense> RemovalCallback { get; set; }
+    
+    [Parameter]
+    public Action UpdateCallback { get; set; }
+    
+    [Parameter]
+    public decimal? RemainingIncome { get; set; }
+
+    private void UpdateValues(decimal? arg)
+    {
+        Expense.Value = arg;
+        UpdateCallback?.Invoke();
+    }
+
+    private void RemoveItem()
+    {
+        RemovalCallback?.Invoke(Expense);
+    }
+}

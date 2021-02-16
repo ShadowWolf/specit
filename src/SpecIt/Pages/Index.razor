@@ -1,0 +1,102 @@
+﻿@page "/"
+@using SpecIt.Models
+@inject NavigationManager NavigationManager
+
+<div class="row justify-content-md-center">
+    <div class="col-lg-4 control-section" id="target">
+        <div>
+            @if (!CreatingProject)
+            {
+                <button class="e-btn" @onclick="@ShowCreateProject">Create Project</button> 
+            }
+        </div>
+            
+        <SfDialog Target="#target" IsModal="false" @bind-Visible="CreatingProject">
+            <DialogTemplates>
+                <Header>Create a new project
+                    <button type="button" class="close" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </Header>
+                <Content>
+                    <EditForm OnValidSubmit="@CreateProject" Model="@_projectCreation">
+                        <DataAnnotationsValidator/>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label class="col-form-label">Project Name</label>
+                                <SfTextBox @bind-Value="@_projectCreation.ProjectName"></SfTextBox>
+                                <ValidationMessage For="@(() => _projectCreation.ProjectName)"></ValidationMessage>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">Create Project</button>
+                        </div>
+                    </EditForm>
+                </Content>
+            </DialogTemplates>
+            <DialogButtons>
+            </DialogButtons>
+            <DialogEvents OnOpen="@InitModal" OnClose="@HideModal" OnOverlayClick="@OnOverlayClick"></DialogEvents>
+            <DialogAnimationSettings Effect="DialogEffect.None"></DialogAnimationSettings>
+        </SfDialog>
+    </div>
+</div>
+
+<style>
+    #target {
+        max-height: 800px;
+        height:  650px;
+    }
+</style>
+
+@code
+{
+    private bool CreatingProject { get; set; } = false;
+    private ProjectCreation _projectCreation;
+
+    protected override void OnInitialized()
+    {
+        _projectCreation = new ProjectCreation();
+    }
+
+    private void ShowCreateProject()
+    {
+        ShowModal();
+    }
+
+    private void ShowModal()
+    {
+        CreatingProject = true;
+    }
+
+    private void InitModal()
+    {
+        _projectCreation = new ProjectCreation();
+    }
+
+    private void HideModal()
+    {
+        CreatingProject = false;
+    }
+
+    private void CreateProject()
+    {
+        var project = new Models.Project()
+        {
+            Name = _projectCreation.ProjectName
+        };
+
+        var projectId = project.SerializeProject();
+        NavigateToProject(projectId);
+        HideModal();
+    }
+    
+    void NavigateToProject(string projectId)
+    {        
+        NavigationManager.NavigateTo($"projects/{projectId}");
+    }
+
+    private void OnOverlayClick(Object args)
+    {
+    }
+}
